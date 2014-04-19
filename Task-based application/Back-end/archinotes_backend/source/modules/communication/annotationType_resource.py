@@ -44,10 +44,10 @@ class annotationTypeResource:
 			return('No annotation type with the ID %s :-(' % id)
 
 
-	def DELETE(self, id):
+	def DELETE(self, name):
 		annotationTypes = MongoClient().communication.annotationTypes	
 		try:
-			ant = annotationTypes.find_one({'_id': ObjectId(oid=str(id)) })
+			ant = annotationTypes.find_one({'name':name })
 			ant['deleted']=True
 			annotationTypes.save(ant)
 			return ('Annotation with ID %s has been deleted' % id)				
