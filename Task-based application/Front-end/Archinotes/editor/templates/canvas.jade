@@ -16,6 +16,26 @@
         .drop-annotations{margin-left:100px;}
         .hiddden{display:none}
         ul, il{list-style-type: none;}
+        .annotation_detail {
+            padding:10px;
+        }
+        .annotation_detail:hover{
+            background-color:#C0C0C0;
+        }
+        .annotation_link {
+            color:black;
+        }
+        .no-padding {
+            padding:0;
+        }
+        .accordion_item {
+            padding:10px;
+        }
+        .line-separator{
+            height:1px;
+            background:#717171;
+            border-bottom:1px solid #313030;
+        }
     #menu.floating-menu
         #accordion.panel-group
             .panel.panel-default
@@ -120,6 +140,8 @@
     script(type='text/javascript', src="/static/arbor/js/renderer.js")
     script(type="text/javascript")
         var idd=0;
+        var glob_obj;
+        var glob_obj_2;
         $( "#addDesktop").submit(function( event ) {
             event.preventDefault();
             var content = $("<span class='annotation_element' onclick='annotation_select(this)' id="+idd+"  style='display:inline-block;'>"+
@@ -217,10 +239,10 @@
                     $(".annotation-type-container-annotations").html("");
                     //[{"deleted": false, "name_annotation_type": "Desacuerdo", "_id": {"$oid": "534269d21d41c8179f51c4e1"}, "annotation_data": [{"Titulo": "zzzz"}, {"Razon": "xxxx"}], "elements": "1,0"}]
                     
-                    glob_obj = JSON.parse(msg);
+                    glob_obj_2 = JSON.parse(msg);
                     
                     //recorro todos las anotaciones
-                    $.each(glob_obj, function(i, test) {
+                    $.each(glob_obj_2, function(i, test) {
                         ele = test.elements.split(',');
                         //recorro todos los ids de los elementos asociados a esta anotacion
                         $.each(ele, function(k,ele_id){
@@ -302,6 +324,8 @@
             
         }
         $(function(){
+            annotation_activate();
+            annotation_activate();
             $('#col_elements_hidden').val(col_elements);
                 $('.modal-annotation-error').html('');
 
@@ -310,15 +334,23 @@
                 }).done(function(msg) {
                     var new_html2 = '';
                     glob_obj = JSON.parse(msg);
-                
+                    
                     $.each(glob_obj, function(i, test) {
-                        new_html2+='<li><div class="checkbox"><label><input type="checkbox" checked> '+test.name+'</label></div></li>';
+                        var esta=false;
+                        $.each(glob_obj_2, function(index,val){
+                            if(val.name_annotation_type === test.name){
+                                esta=true;
+                            }
+                        });
+                        if(esta === true){
+                            new_html2+='<li><div class="checkbox"><label><input type="checkbox" id="annotation_checkbox_'+test.name+'" onchange="filter_annotations()" checked> '+test.name+'</label></div></li>';
+                        }
+                        
                     });
                     $('#lista_annotation_types_menu').html(new_html2);
                     
                 });
         });
-        var glob_obj;
         $("#modal-annotation-types").change(function() {
              
              var new_html='<br>';
@@ -354,5 +386,57 @@
                 alert("a: "+item.rrr)
                 //TODO aca falta mostrar el modal con todos los comentarios que estan en el JSON que llego esto con los tos a's que estan en la lisneas 240 y 248
                 //$('#unicoo').text(item.data('id'));
+          }
+          function filter_annotations(){
+            $('#collapseAnnotations1').html('');
+           var l = $('input:checkbox[id^="annotation_checkbox_"]');
+           var html = "<ul class='no-padding'>";
+           $.each(l, function(index,value){
+                var isChecked = $('#'+value.id).is(':checked');
+                if(isChecked) {
+                    var ann_name = value.id.split("_")[2];
+                    var inp = get_annotation_data(ann_name)[0];
+                    if(inp !== ""){
+                        var prop;
+                        for (var name in inp) {
+                          prop = inp[name];
+                        }
+                        html+='<a class="annotation_link" onclick="get_annotation_details(\''+ann_name+'\')" href="#"><li class="annotation_detail">'+prop+'</li></a>';
+                    }
+                }
+            });
+           html += "</ul>";
+           $('#collapseAnnotations1').html(html);
+          }
+          function get_annotation_data(ann_name){
+            var l = glob_obj_2;
+            for(var i = 0; i<l.length; i++){
+                if(l[i].name_annotation_type === ann_name){
+                    return l[i].annotation_data;
+                }
+            }
+            return "";
+          }
+          function get_annotation(ann_name){
+            var l = glob_obj;
+            for(var i = 0; i<l.length; i++){
+                if(l[i].name === ann_name){
+                    return l[i];
+                }
+            }
+            return "";
+          }
+          function get_annotation_details(ann_name) {
+            $('#collapseAnnotations2').html('');
+            var data = get_annotation_data(ann_name);
+            var html = "<ul class='no-padding'>";
+            $.each(data, function(index, value){
+                for (var name in value) {
+                  prop = value[name];
+                  html += "<li class='accordion_item'>"+prop+"</li><div class='line-separator'></div>";
+                }
+            });
+            html += "</ul>";
+            $('#collapseAnnotations2').html(html);
           }
 
